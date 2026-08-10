@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0, viewport-fit=cover">
+
+<title>住宅ローン返済シミュレーター</title>
+
+<style>
+:root {
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --text: #172033;
+  --muted: #667085;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --border: #dbe1ea;
+  --good: #087443;
+  --good-bg: #e9f8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Noto Sans JP",
+    sans-serif;
+  line-height: 1.55;
+}
+
+.container {
+  max-width: 1180px;
+  margin: auto;
+  padding: 16px 12px 50px;
+}
+
+h1 {
+  font-size: 24px;
+  margin: 0 0 6px;
+}
+
+h2 {
+  font-size: 18px;
+  margin: 0 0 14px;
+}
+
+h3 {
+  font-size: 16px;
+  margin: 20px 0 10px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+.small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.inputs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.field input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+}
+
+.input-unit {
+  position: relative;
+}
+
+.input-unit input {
+  padding-right: 45px;
+}
+
+.input-unit span {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  color: var(--muted);
+}
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+
+  border: 0;
+  border-radius: 11px;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#calcBtn {
+  width: 100%;
+  background: var(--primary);
+  color: white;
+  font-size: 18px;
+}
+
+#calcBtn:active {
+  background: var(--primary-dark);
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.tab {
+  flex: 1;
+  background: #eef2f7;
+  color: #475467;
+}
+
+.tab.active {
+  background: #172033;
+  color: white;
+}
+
+.notice {
+  background: #fff8df;
+  border: 1px solid #f2d58a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #694c00;
+  margin-top: 12px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.metric {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.metric.good {
+  background: var(--good-bg);
+  border-color: #b9e7ce;
+}
+
+.metric .label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metric .value {
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.metric.good .value {
+  color: var(--good);
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.compare-box {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.compare-value {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.summary .item {
+  border-bottom: 1px solid #edf0f4;
+  padding: 8px 4px;
+}
+
+.summary .item span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.summary .item strong {
+  font-size: 17px;
+}
+
+/* 表 */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 1350px;
+  background: white;
+  font-size: 13px;
+}
+
+th,
+td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #e8edf3;
+  text-align: right;
+  white-space: nowrap;
+}
+
+th {
+  background: #f1f5f9;
+  color: #475467;
+}
+
+th:first-child,
+td:first-child {
+  text-align: center;
+}
+
+td:last-child {
+  font-weight: 900;
+  background: #eef6ff;
+}
+
+tr:nth-child(even) td {
+  background: #fbfcfe;
+}
+
+tr:nth-child(even) td:last-child {
+  background: #eef6ff;
+}
+
+td.monthly-col {
+  font-weight: 700;
+  color: var(--primary-dark);
+  background: #f5f9ff;
+}
+
+tr:nth-child(even) td.monthly-col {
+  background: #eef5ff;
+}
+
+.formula {
+  color: #475467;
+  font-size: 13px;
+}
+
+.formula code {
+  display: block;
+  background: #f5f7fb;
+  padding: 10px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  margin: 8px 0;
+}
+
+@media (max-width: 800px) {
+
+  .inputs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .container {
+    padding: 10px 8px 40px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  h1 {
+    font-size: 21px;
+  }
+
+  .inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics,
+  .summary,
+  .compare {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    padding: 5px 0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- ========================= -->
+<!-- タイトル -->
+<!-- ========================= -->
+
+<section class="card">
+
+<h1>住宅ローン返済シミュレーター</h1>
+
+<p class="small">
+フラット35・元利均等返済。
+会社補助、利子補給、住宅ローン控除を反映して、
+実質的な住宅ローン負担額を計算します。
+</p>
+
+</section>
+
+
+<!-- ========================= -->
+<!-- 入力 -->
+<!-- ========================= -->
+
+<section class="card">
+
+<h2>条件設定</h2>
+
+<div class="inputs">
+
+<div class="field">
+<label>借入額</label>
+
+<div class="input-unit">
+<input
+  id="loan"
+  type="number"
+  value="40000000"
+  min="0"
+  step="10000">
+
+<span>円</span>
+</div>
+</div>
+
+
+<div class="field">
+<label>年収</label>
+
+<div class="input-unit">
+<input
+  id="income"
+  type="number"
+  value="7000000"
+  min="0"
+  step="10000">
+
+<span>円</span>
+</div>
+</div>
+
+
+<div class="field">
+<label>補助金等の実効税率</label>
+
+<div class="input-unit">
+<input
+  id="taxRate"
+  type="number"
+  value="30"
+  min="0"
+  max="100"
+  step="0.1">
+
+<span>%</span>
+</div>
+</div>
+
+
+<div class="field">
+<label>住宅ローン控除率</label>
+
+<div class="input-unit">
+<input
+  id="deductionRate"
+  type="number"
+  value="0.7"
+  min="0"
+  step="0.1">
+
+<span>%</span>
+</div>
+</div>
+
+
+<div class="field">
+<label>控除対象借入限度額</label>
+
+<div class="input-unit">
+<input
+  id="deductionLimit"
+  type="number"
+  value="35000000"
+  min="0"
+  step="100000">
+
+<span>円</span>
+</div>
+</div>
+
+
+<div class="field">
+<label>通常金利</label>
+
+<div class="input-unit">
+<input
+  id="normalRate"
+  type="number"
+  value="4.0"
+  step="0.1">
+
+<span>%</span>
+</div>
+</div>
+
+
+<div class="field">
+<label>最初の5年間の金利</label>
+
+<div class="input-unit">
+<input
+  id="firstRate"
+  type="number"
+  value="3.0"
+  step="0.1">
+
+<span>%</span>
+</div>
+</div>
+
+
+<div class="field">
+<label>返済期間</label>
+
+<div class="input-unit">
+<input
+  id="years"
+  type="number"
+  value="35"
+  min="1"
+  max="50">
+
+<span>年</span>
+</div>
+</div>
+
+</div>
+
+
+<div class="notice">
+
+補助金・利子補給の税率は概算値です。
+初期値は年収700万円を想定して30%としています。
+実際の税額は所得税・住民税・社会保険料等によって異なります。
+
+</div>
+
+
+<div style="margin-top:14px">
+
+<button id="calcBtn">
+計算する
+</button>
+
+</div>
+
+</section>
+
+
+<!-- ========================= -->
+<!-- 条件 -->
+<!-- ========================= -->
+
+<section class="card">
+
+<h2>会社制度</h2>
+
+<div class="tabs">
+
+<button class="tab active" data-condition="1">
+条件①
+</button>
+
+<button class="tab" data-condition="2">
+条件②
+</button>
+
+</div>
+
+<div id="conditionText"></div>
+
+</section>
+
+
+<!-- ========================= -->
+<!-- 結果 -->
+<!-- ========================= -->
+
+<section class="card">
+
+<h2>シミュレーション結果</h2>
+
+<div id="results"></div>
+
+</section>
+
+
+<!-- ========================= -->
+<!-- ロジック -->
+<!-- ========================= -->
+
+<section class="card">
+
+<h2>計算ロジック</h2>
+
+<div class="formula">
+
+<p>
+<b>① 毎月のローン返済額</b>
+</p>
+
+<code>
+毎月返済額
+=
+残高 × 月利 × (1 + 月利)^残り月数
+÷
+((1 + 月利)^残り月数 - 1)
+</code>
+
+<p>
+毎月、利息と元金を分離して計算します。
+12か月分を合計して年間返済額・年間利息・年間元金を算出します。
+その年に適用される「毎月返済額」も年次表に表示します。
+</p>
+
+
+<p>
+<b>② 利子補給</b>
+</p>
+
+<code>
+利子補給対象額
+=
+min(借入額, 1,500万円)
+
+1〜5年目
+対象額 × 1.5%
+
+6〜25年目
+対象額 × 1.7%
+
+26年目以降
+0円
+</code>
+
+<p>
+ただし、その年に実際に支払った利息を超えないようにしています。
+</p>
+
+
+<p>
+<b>③ 補助金・利子補給の税引後額</b>
+</p>
+
+<code>
+税引後額
+=
+補助金等 × (1 - 実効税率)
+</code>
+
+
+<p>
+<b>④ 住宅ローン控除</b>
+</p>
+
+<code>
+控除対象残高
+=
+min(年末残高, 控除対象借入限度額)
+
+控除額
+=
+控除対象残高 × 控除率
+</code>
+
+<p>
+住宅ローン控除は13年間適用します。
+</p>
+
+
+<p>
+<b>⑤ 実質支払額</b>
+</p>
+
+<code>
+実質支払額
+=
+年間ローン返済額
+- 税引後会社補助金
+- 税引後利子補給
+- 住宅ローン控除
+</code>
+
+<p>
+月々の実質負担額は、実質支払額を12で割った概算値です
+（会社補助金や住宅ローン控除は年1回まとめて受け取る想定のため、
+実際の毎月の支払額は「毎月のローン返済額」に近くなります）。
+</p>
+
+</div>
+
+</section>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   制度条件
+   ========================================================= */
+
+const CONDITIONS = {
+
+  1: {
+
+    name: "条件①",
+
+    // 会社補助金
+    // 1〜10年目：年間16万円
+    companySubsidy: function(year) {
+
+      return year <= 10
+        ? 160000
+        : 0;
+
+    },
+
+    // 利子補給率
+    interestSupportRate: function(year) {
+
+      if (year <= 5) {
+        return 0.015;
+      }
+
+      if (year <= 25) {
+        return 0.017;
+      }
+
+      return 0;
+
+    },
+
+    // 利子補給対象上限
+    interestSupportCap: 15000000
+
+  },
+
+
+  2: {
+
+    name: "条件②",
+
+    // 利子補給対象上限が条件①と異なる（3,500万円）
+
+    companySubsidy: function(year) {
+
+      return year <= 10
+        ? 160000
+        : 0;
+
+    },
+
+    interestSupportRate: function(year) {
+
+      if (year <= 5) {
+        return 0.015;
+      }
+
+      if (year <= 25) {
+        return 0.017;
+      }
+
+      return 0;
+
+    },
+
+    interestSupportCap: 35000000
+
+  }
+
+};
+
+
+/* 現在選択している条件 */
+
+let selectedCondition = 1;
+
+
+/* =========================================================
+   共通関数
+   ========================================================= */
+
+function getValue(id) {
+
+  return Number(
+    document.getElementById(id).value
+  ) || 0;
+
+}
+
+
+/* 円表示 */
+
+function yen(value) {
+
+  return Math.round(value)
+    .toLocaleString("ja-JP") + "円";
+
+}
+
+
+/* パーセント表示 */
+
+function percent(value) {
+
+  return value.toLocaleString(
+    "ja-JP",
+    {
+      maximumFractionDigits: 2
+    }
+  ) + "%";
+
+}
+
+
+/* =========================================================
+   元利均等返済の月額計算
+   ========================================================= */
+
+function monthlyPayment(
+  balance,
+  annualRate,
+  remainingMonths
+) {
+
+  if (
+    balance <= 0 ||
+    remainingMonths <= 0
+  ) {
+    return 0;
+  }
+
+  const monthlyRate =
+    annualRate / 100 / 12;
+
+
+  /* 金利0%の場合 */
+
+  if (monthlyRate === 0) {
+
+    return balance / remainingMonths;
+
+  }
+
+
+  return (
+
+    balance *
+    monthlyRate *
+    Math.pow(
+      1 + monthlyRate,
+      remainingMonths
+    )
+
+  ) / (
+
+    Math.pow(
+      1 + monthlyRate,
+      remainingMonths
+    ) - 1
+
+  );
+
+}
+
+
+/* =========================================================
+   シミュレーション
+   ========================================================= */
+
+function simulate(conditionId) {
+
+  const loan =
+    getValue("loan");
+
+  const years =
+    Math.round(getValue("years"));
+
+  const firstRate =
+    getValue("firstRate");
+
+  const normalRate =
+    getValue("normalRate");
+
+  const taxRate =
+    getValue("taxRate") / 100;
+
+  const deductionRate =
+    getValue("deductionRate") / 100;
+
+  const deductionLimit =
+    getValue("deductionLimit");
+
+
+  const condition =
+    CONDITIONS[conditionId];
+
+
+  let balance = loan;
+
+
+  const rows = [];
+
+
+  let totalPayment = 0;
+
+  let totalInterest = 0;
+
+  let totalCompanySubsidy = 0;
+
+  let totalInterestSupport = 0;
+
+  let totalDeduction = 0;
+
+
+  /*
+   * 年ごとの計算
+   */
+
+  for (
+    let year = 1;
+    year <= years;
+    year++
+  ) {
+
+
+    /*
+     * 1〜5年目は3%
+     * 6年目以降は4%
+     */
+
+    const annualRate =
+      year <= 5
+        ? firstRate
+        : normalRate;
+
+
+    /*
+     * その年の残り期間から
+     * 月々の返済額を計算
+     */
+
+    const remainingMonths =
+      (years - year + 1) * 12;
+
+
+    const monthly =
+      monthlyPayment(
+        balance,
+        annualRate,
+        remainingMonths
+      );
+
+
+    let annualPayment = 0;
+
+    let annualInterest = 0;
+
+    let annualPrincipal = 0;
+
+
+    /*
+     * 12か月を1か月ずつ計算
+     */
+
+    for (
+      let month = 1;
+      month <= 12 && balance > 0.01;
+      month++
+    ) {
+
+
+      const monthlyRate =
+        annualRate / 100 / 12;
+
+
+      /*
+       * その月の利息
+       */
+
+      const interest =
+        balance * monthlyRate;
+
+
+      /*
+       * 通常の元金返済額
+       */
+
+      let principal =
+        monthly - interest;
+
+
+      /*
+       * 最終月の端数調整
+       */
+
+      if (principal > balance) {
+
+        principal = balance;
+
+      }
+
+
+      const payment =
+        interest + principal;
+
+
+      annualInterest += interest;
+
+      annualPrincipal += principal;
+
+      annualPayment += payment;
+
+
+      balance -= principal;
+
+
+      if (balance < 0.01) {
+
+        balance = 0;
+
+      }
+
+    }
+
+
+    /* =============================================
+       会社補助金
+       ============================================= */
+
+    const companySubsidy =
+      condition.companySubsidy(year);
+
+
+    /* =============================================
+       利子補給
+       ============================================= */
+
+    const supportBase =
+      Math.min(
+        loan,
+        condition.interestSupportCap
+      );
+
+
+    const supportRate =
+      condition.interestSupportRate(year);
+
+
+    /*
+     * 利子補給額は
+     *
+     * 対象額 × 補助率
+     *
+     * ただし実際に払った利息を超えない
+     */
+
+    const interestSupport =
+      Math.min(
+        supportBase * supportRate,
+        annualInterest
+      );
+
+
+    /* =============================================
+       税引後補助
+       ============================================= */
+
+    const companySubsidyAfterTax =
+      companySubsidy *
+      (1 - taxRate);
+
+
+    const interestSupportAfterTax =
+      interestSupport *
+      (1 - taxRate);
+
+
+    const afterTaxSupport =
+      companySubsidyAfterTax +
+      interestSupportAfterTax;
+
+
+    /* =============================================
+       住宅ローン控除
+       ============================================= */
+
+    let deduction = 0;
+
+
+    if (year <= 13) {
+
+      const deductionBase =
+        Math.min(
+          balance,
+          deductionLimit
+        );
+
+
+      deduction =
+        deductionBase *
+        deductionRate;
+
+    }
+
+
+    /* =============================================
+       実質支払額
+       ============================================= */
+
+    const realPayment =
+      annualPayment
+      - afterTaxSupport
+      - deduction;
+
+
+    rows.push({
+
+      year,
+
+      annualRate,
+
+      annualPayment,
+
+      annualInterest,
+
+      annualPrincipal,
+
+      endingBalance: balance,
+
+      companySubsidy,
+
+      interestSupport,
+
+      afterTaxSupport,
+
+      deduction,
+
+      realPayment,
+
+      /* その年に適用される毎月のローン返済額 */
+      monthlyLoanPayment: monthly,
+
+      /* 実質支払額を12で割った月あたりの概算額 */
+      monthlyRealPayment: realPayment / 12
+
+    });
+
+
+    /* 集計 */
+
+    totalPayment +=
+      annualPayment;
+
+    totalInterest +=
+      annualInterest;
+
+    totalCompanySubsidy +=
+      companySubsidy;
+
+    totalInterestSupport +=
+      interestSupport;
+
+    totalDeduction +=
+      deduction;
+
+  }
+
+
+  return {
+
+    loan,
+
+    years,
+
+    rows,
+
+    totalPayment,
+
+    totalInterest,
+
+    totalCompanySubsidy,
+
+    totalInterestSupport,
+
+    totalDeduction,
+
+    totalRealPayment:
+      rows.reduce(
+        (sum, row) =>
+          sum + row.realPayment,
+        0
+      ),
+
+    taxRate
+
+  };
+
+}
+
+
+/* =========================================================
+   条件表示
+   ========================================================= */
+
+function renderConditionText() {
+
+  const condition =
+    CONDITIONS[selectedCondition];
+
+
+  document.getElementById(
+    "conditionText"
+  ).innerHTML = `
+
+    <p>
+      <b>${condition.name}</b>
+    </p>
+
+    <p>
+      会社補助金：
+      1〜10年目は年間16万円
+    </p>
+
+    <p>
+      利子補給対象：
+      借入額と${(condition.interestSupportCap / 10000).toLocaleString("ja-JP")}万円の小さい方
+    </p>
+
+    <p>
+      1〜5年目：
+      対象額 × 1.5%
+    </p>
+
+    <p>
+      6〜25年目：
+      対象額 × 1.7%
+    </p>
+
+    <p>
+      26年目以降：
+      補助なし
+    </p>
+
+  `;
+
+}
+
+
+/* =========================================================
+   結果表示
+   ========================================================= */
+
+function renderResults(result) {
+
+  const totalReal =
+    result.totalRealPayment;
+
+
+  const monthlyAverage =
+    totalReal /
+    (result.years * 12);
+
+
+  const burdenRate =
+    totalReal /
+    result.loan *
+    100;
+
+
+  const companyAfterTax =
+    result.totalCompanySubsidy *
+    (1 - result.taxRate);
+
+
+  const interestAfterTax =
+    result.totalInterestSupport *
+    (1 - result.taxRate);
+
+
+  /* 初年度の毎月のローン返済額（参考表示用） */
+
+  const firstYearMonthly =
+    result.rows.length > 0
+      ? result.rows[0].monthlyLoanPayment
+      : 0;
+
+
+  let html = `
+
+    <!-- =====================
+         総合結果
+    ====================== -->
+
+    <div class="metrics">
+
+      <div class="metric">
+
+        <div class="label">
+          借入額
+        </div>
+
+        <div class="value">
+          ${yen(result.loan)}
+        </div>
+
+      </div>
+
+
+      <div class="metric">
+
+        <div class="label">
+          総返済額
+        </div>
+
+        <div class="value">
+          ${yen(result.totalPayment)}
+        </div>
+
+      </div>
+
+
+      <div class="metric">
+
+        <div class="label">
+          総利息
+        </div>
+
+        <div class="value">
+          ${yen(result.totalInterest)}
+        </div>
+
+      </div>
+
+
+      <div class="metric good">
+
+        <div class="label">
+          実質支払総額
+        </div>
+
+        <div class="value">
+          ${yen(totalReal)}
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================
+         比較
+    ====================== -->
+
+    <div class="compare">
+
+      <div class="compare-box">
+
+        <div class="small">
+          通常のローン返済額（初年度・月々）
+        </div>
+
+        <div class="compare-value">
+          ${yen(firstYearMonthly)}
+        </div>
+
+      </div>
+
+
+      <div
+        class="compare-box"
+        style="background:#eef6ff">
+
+        <div class="small">
+          補助・控除後の実質負担額（月平均）
+        </div>
+
+        <div class="compare-value">
+          ${yen(monthlyAverage)}
+        </div>
+
+        <div class="small">
+          期間全体の月平均額です
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================
+         集計
+    ====================== -->
+
+    <div
+      class="summary"
+      style="margin-top:18px">
+
+      <div class="item">
+
+        <span>
+          会社補助金総額（税引前）
+        </span>
+
+        <strong>
+          ${yen(result.totalCompanySubsidy)}
+        </strong>
+
+      </div>
+
+
+      <div class="item">
+
+        <span>
+          会社補助金総額（税引後）
+        </span>
+
+        <strong>
+          ${yen(companyAfterTax)}
+        </strong>
+
+      </div>
+
+
+      <div class="item">
+
+        <span>
+          利子補給総額（税引前）
+        </span>
+
+        <strong>
+          ${yen(result.totalInterestSupport)}
+        </strong>
+
+      </div>
+
+
+      <div class="item">
+
+        <span>
+          利子補給総額（税引後）
+        </span>
+
+        <strong>
+          ${yen(interestAfterTax)}
+        </strong>
+
+      </div>
+
+
+      <div class="item">
+
+        <span>
+          住宅ローン控除総額
+        </span>
+
+        <strong>
+          ${yen(result.totalDeduction)}
+        </strong>
+
+      </div>
+
+
+      <div class="item">
+
+        <span>
+          実質的な総負担率
+        </span>
+
+        <strong>
+          ${percent(burdenRate)}
+        </strong>
+
+      </div>
+
+
+      <div class="item">
+
+        <span>
+          月平均の実質負担額
+        </span>
+
+        <strong>
+          ${yen(monthlyAverage)}
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================
+         年次表
+    ====================== -->
+
+    <h3>
+      年ごとの返済表
+    </h3>
+
+    <p class="small">
+      「月々のローン返済額」はその年に実際に銀行へ支払う毎月の金額、
+      「月々の実質負担額」は補助・控除を年換算で月割りした概算の負担感です。
+    </p>
+
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>年</th>
+
+            <th>金利</th>
+
+            <th>
+              年間<br>
+              ローン返済額
+            </th>
+
+            <th>
+              月々の<br>
+              ローン返済額
+            </th>
+
+            <th>
+              年間利息
+            </th>
+
+            <th>
+              年間元金<br>
+              返済額
+            </th>
+
+            <th>
+              年末残高
+            </th>
+
+            <th>
+              会社補助金
+            </th>
+
+            <th>
+              利子補給額
+            </th>
+
+            <th>
+              補助・利子補給<br>
+              税引後
+            </th>
+
+            <th>
+              住宅ローン<br>
+              控除
+            </th>
+
+            <th>
+              実質支払額
+            </th>
+
+            <th>
+              月々の<br>
+              実質負担額
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+  `;
+
+
+  /* 年次表の各行を生成 */
+
+  result.rows.forEach(row => {
+
+    html += `
+
+      <tr>
+
+        <td>
+          ${row.year}年目
+        </td>
+
+        <td>
+          ${percent(row.annualRate)}
+        </td>
+
+        <td>
+          ${yen(row.annualPayment)}
+        </td>
+
+        <td class="monthly-col">
+          ${yen(row.monthlyLoanPayment)}
+        </td>
+
+        <td>
+          ${yen(row.annualInterest)}
+        </td>
+
+        <td>
+          ${yen(row.annualPrincipal)}
+        </td>
+
+        <td>
+          ${yen(row.endingBalance)}
+        </td>
+
+        <td>
+          ${yen(row.companySubsidy)}
+        </td>
+
+        <td>
+          ${yen(row.interestSupport)}
+        </td>
+
+        <td>
+          ${yen(row.afterTaxSupport)}
+        </td>
+
+        <td>
+          ${yen(row.deduction)}
+        </td>
+
+        <td>
+          ${yen(row.realPayment)}
+        </td>
+
+        <td class="monthly-col">
+          ${yen(row.monthlyRealPayment)}
+        </td>
+
+      </tr>
+
+    `;
+
+  });
+
+
+  html += `
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <p class="small">
+
+      ※年次表は、毎月の返済を1か月ずつ計算して
+      12か月分を合計しています。
+      月々の金額は水色のセルで強調表示しています。
+
+    </p>
+
+  `;
+
+
+  document.getElementById(
+    "results"
+  ).innerHTML = html;
+
+}
+
+
+/* =========================================================
+   計算ボタン
+   ========================================================= */
+
+function calculate() {
+
+  const loan =
+    getValue("loan");
+
+
+  if (loan <= 0) {
+
+    alert("借入額を入力してください。");
+
+    return;
+
+  }
+
+
+  const result =
+    simulate(selectedCondition);
+
+
+  renderResults(result);
+
+}
+
+
+/* =========================================================
+   条件切り替え
+   ========================================================= */
+
+document
+  .querySelectorAll(".tab")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      function() {
+
+        selectedCondition =
+          Number(
+            this.dataset.condition
+          );
+
+
+        document
+          .querySelectorAll(".tab")
+          .forEach(btn => {
+
+            btn.classList.remove(
+              "active"
+            );
+
+          });
+
+
+        this.classList.add(
+          "active"
+        );
+
+
+        renderConditionText();
+
+        calculate();
+
+      }
+    );
+
+  });
+
+
+/* 計算ボタン */
+
+document
+  .getElementById("calcBtn")
+  .addEventListener(
+    "click",
+    calculate
+  );
+
+
+/* 初期表示 */
+
+renderConditionText();
+
+calculate();
+
+</script>
+
+</body>
+</html>
