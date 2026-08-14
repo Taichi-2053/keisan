@@ -237,7 +237,6 @@ button {
   font-size: 17px;
 }
 
-/* 表 */
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -249,7 +248,7 @@ button {
 table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 1350px;
+  min-width: 1450px;
   background: white;
   font-size: 13px;
 }
@@ -363,10 +362,6 @@ tr:nth-child(even) td.monthly-col {
 
 <div class="container">
 
-<!-- ========================= -->
-<!-- タイトル -->
-<!-- ========================= -->
-
 <section class="card">
 
 <h1>住宅ローン返済シミュレーター</h1>
@@ -379,10 +374,6 @@ tr:nth-child(even) td.monthly-col {
 
 </section>
 
-
-<!-- ========================= -->
-<!-- 入力 -->
-<!-- ========================= -->
 
 <section class="card">
 
@@ -539,10 +530,6 @@ tr:nth-child(even) td.monthly-col {
 </section>
 
 
-<!-- ========================= -->
-<!-- 条件 -->
-<!-- ========================= -->
-
 <section class="card">
 
 <h2>会社制度</h2>
@@ -564,10 +551,6 @@ tr:nth-child(even) td.monthly-col {
 </section>
 
 
-<!-- ========================= -->
-<!-- 結果 -->
-<!-- ========================= -->
-
 <section class="card">
 
 <h2>シミュレーション結果</h2>
@@ -576,10 +559,6 @@ tr:nth-child(even) td.monthly-col {
 
 </section>
 
-
-<!-- ========================= -->
-<!-- ロジック -->
-<!-- ========================= -->
 
 <section class="card">
 
@@ -601,8 +580,6 @@ tr:nth-child(even) td.monthly-col {
 
 <p>
 毎月、利息と元金を分離して計算します。
-12か月分を合計して年間返済額・年間利息・年間元金を算出します。
-その年に適用される「毎月返済額」も年次表に表示します。
 </p>
 
 
@@ -611,22 +588,26 @@ tr:nth-child(even) td.monthly-col {
 </p>
 
 <code>
-利子補給対象額
+その月の利子補給対象残高
 =
-min(借入額, 1,500万円)
+min(
+その月のローン残高,
+利子補給対象上限
+)
 
-1〜5年目
-対象額 × 1.5%
+その月の利子補給額
+=
+対象残高 × 年間補給率 ÷ 12
 
-6〜25年目
-対象額 × 1.7%
-
-26年目以降
-0円
+年間利子補給額
+=
+12か月分の合計
 </code>
 
 <p>
-ただし、その年に実際に支払った利息を超えないようにしています。
+1〜5年目は1.5%、6〜25年目は1.7%、
+26年目以降は0%とします。
+また、実際に支払ったその月の利息を超える利子補給は行いません。
 </p>
 
 
@@ -673,12 +654,6 @@ min(年末残高, 控除対象借入限度額)
 - 住宅ローン控除
 </code>
 
-<p>
-月々の実質負担額は、実質支払額を12で割った概算値です
-（会社補助金や住宅ローン控除は年1回まとめて受け取る想定のため、
-実際の毎月の支払額は「毎月のローン返済額」に近くなります）。
-</p>
-
 </div>
 
 </section>
@@ -698,8 +673,6 @@ const CONDITIONS = {
 
     name: "条件①",
 
-    // 会社補助金
-    // 1〜10年目：年間16万円
     companySubsidy: function(year) {
 
       return year <= 10
@@ -708,7 +681,6 @@ const CONDITIONS = {
 
     },
 
-    // 利子補給率
     interestSupportRate: function(year) {
 
       if (year <= 5) {
@@ -723,7 +695,6 @@ const CONDITIONS = {
 
     },
 
-    // 利子補給対象上限
     interestSupportCap: 15000000
 
   },
@@ -732,8 +703,6 @@ const CONDITIONS = {
   2: {
 
     name: "条件②",
-
-    // 利子補給対象上限が条件①と異なる（3,500万円）
 
     companySubsidy: function(year) {
 
@@ -764,8 +733,6 @@ const CONDITIONS = {
 };
 
 
-/* 現在選択している条件 */
-
 let selectedCondition = 1;
 
 
@@ -782,8 +749,6 @@ function getValue(id) {
 }
 
 
-/* 円表示 */
-
 function yen(value) {
 
   return Math.round(value)
@@ -791,8 +756,6 @@ function yen(value) {
 
 }
 
-
-/* パーセント表示 */
 
 function percent(value) {
 
@@ -807,7 +770,7 @@ function percent(value) {
 
 
 /* =========================================================
-   元利均等返済の月額計算
+   元利均等返済
    ========================================================= */
 
 function monthlyPayment(
@@ -826,8 +789,6 @@ function monthlyPayment(
   const monthlyRate =
     annualRate / 100 / 12;
 
-
-  /* 金利0%の場合 */
 
   if (monthlyRate === 0) {
 
@@ -896,13 +857,9 @@ function simulate(conditionId) {
 
 
   let totalPayment = 0;
-
   let totalInterest = 0;
-
   let totalCompanySubsidy = 0;
-
   let totalInterestSupport = 0;
-
   let totalDeduction = 0;
 
 
@@ -917,11 +874,6 @@ function simulate(conditionId) {
   ) {
 
 
-    /*
-     * 1〜5年目は3%
-     * 6年目以降は4%
-     */
-
     const annualRate =
       year <= 5
         ? firstRate
@@ -929,8 +881,7 @@ function simulate(conditionId) {
 
 
     /*
-     * その年の残り期間から
-     * 月々の返済額を計算
+     * その年の返済開始時点の残り期間
      */
 
     const remainingMonths =
@@ -946,10 +897,10 @@ function simulate(conditionId) {
 
 
     let annualPayment = 0;
-
     let annualInterest = 0;
-
     let annualPrincipal = 0;
+
+    let annualInterestSupport = 0;
 
 
     /*
@@ -962,9 +913,18 @@ function simulate(conditionId) {
       month++
     ) {
 
-
       const monthlyRate =
         annualRate / 100 / 12;
+
+
+      /*
+       * 月初残高を保存
+       *
+       * 利子補給はこの月の残高を基準にする
+       */
+
+      const monthStartBalance =
+        balance;
 
 
       /*
@@ -976,7 +936,7 @@ function simulate(conditionId) {
 
 
       /*
-       * 通常の元金返済額
+       * 元金返済額
        */
 
       let principal =
@@ -997,6 +957,57 @@ function simulate(conditionId) {
       const payment =
         interest + principal;
 
+
+      /*
+       * =========================================
+       * 利子補給
+       * =========================================
+       */
+
+      const supportRate =
+        condition.interestSupportRate(year);
+
+
+      /*
+       * その月の残高と
+       * 制度上限の小さい方
+       */
+
+      const supportBase =
+        Math.min(
+          monthStartBalance,
+          condition.interestSupportCap
+        );
+
+
+      /*
+       * 年率を月率に変換
+       */
+
+      const monthlySupport =
+        supportBase *
+        supportRate /
+        12;
+
+
+      /*
+       * 実際の利息を超えない
+       */
+
+      const actualMonthlySupport =
+        Math.min(
+          monthlySupport,
+          interest
+        );
+
+
+      annualInterestSupport +=
+        actualMonthlySupport;
+
+
+      /*
+       * 通常の返済処理
+       */
 
       annualInterest += interest;
 
@@ -1029,34 +1040,12 @@ function simulate(conditionId) {
        利子補給
        ============================================= */
 
-    const supportBase =
-      Math.min(
-        loan,
-        condition.interestSupportCap
-      );
-
-
-    const supportRate =
-      condition.interestSupportRate(year);
-
-
-    /*
-     * 利子補給額は
-     *
-     * 対象額 × 補助率
-     *
-     * ただし実際に払った利息を超えない
-     */
-
     const interestSupport =
-      Math.min(
-        supportBase * supportRate,
-        annualInterest
-      );
+      annualInterestSupport;
 
 
     /* =============================================
-       税引後補助
+       税引後
        ============================================= */
 
     const companySubsidyAfterTax =
@@ -1131,16 +1120,13 @@ function simulate(conditionId) {
 
       realPayment,
 
-      /* その年に適用される毎月のローン返済額 */
       monthlyLoanPayment: monthly,
 
-      /* 実質支払額を12で割った月あたりの概算額 */
-      monthlyRealPayment: realPayment / 12
+      monthlyRealPayment:
+        realPayment / 12
 
     });
 
-
-    /* 集計 */
 
     totalPayment +=
       annualPayment;
@@ -1217,17 +1203,19 @@ function renderConditionText() {
 
     <p>
       利子補給対象：
-      借入額と${(condition.interestSupportCap / 10000).toLocaleString("ja-JP")}万円の小さい方
+      その時点のローン残高と
+      ${(condition.interestSupportCap / 10000).toLocaleString("ja-JP")}万円
+      の小さい方
     </p>
 
     <p>
       1〜5年目：
-      対象額 × 1.5%
+      対象残高 × 1.5%
     </p>
 
     <p>
       6〜25年目：
-      対象額 × 1.7%
+      対象残高 × 1.7%
     </p>
 
     <p>
@@ -1271,8 +1259,6 @@ function renderResults(result) {
     (1 - result.taxRate);
 
 
-  /* 初年度の毎月のローン返済額（参考表示用） */
-
   const firstYearMonthly =
     result.rows.length > 0
       ? result.rows[0].monthlyLoanPayment
@@ -1280,10 +1266,6 @@ function renderResults(result) {
 
 
   let html = `
-
-    <!-- =====================
-         総合結果
-    ====================== -->
 
     <div class="metrics">
 
@@ -1341,10 +1323,6 @@ function renderResults(result) {
     </div>
 
 
-    <!-- =====================
-         比較
-    ====================== -->
-
     <div class="compare">
 
       <div class="compare-box">
@@ -1380,10 +1358,6 @@ function renderResults(result) {
 
     </div>
 
-
-    <!-- =====================
-         集計
-    ====================== -->
 
     <div
       class="summary"
@@ -1482,17 +1456,14 @@ function renderResults(result) {
     </div>
 
 
-    <!-- =====================
-         年次表
-    ====================== -->
-
     <h3>
       年ごとの返済表
     </h3>
 
     <p class="small">
-      「月々のローン返済額」はその年に実際に銀行へ支払う毎月の金額、
-      「月々の実質負担額」は補助・控除を年換算で月割りした概算の負担感です。
+      「月々のローン返済額」は銀行へ実際に支払う毎月の金額です。
+      利子補給額は、その月のローン残高と制度上限を比較して
+      毎月計算しています。
     </p>
 
 
@@ -1566,8 +1537,6 @@ function renderResults(result) {
         <tbody>
   `;
 
-
-  /* 年次表の各行を生成 */
 
   result.rows.forEach(row => {
 
@@ -1645,9 +1614,9 @@ function renderResults(result) {
 
     <p class="small">
 
-      ※年次表は、毎月の返済を1か月ずつ計算して
-      12か月分を合計しています。
-      月々の金額は水色のセルで強調表示しています。
+      ※利子補給額は毎月のローン残高を基準に計算しています。
+      そのため、残高が制度上限を下回った後は
+      利子補給額も徐々に減少します。
 
     </p>
 
@@ -1662,7 +1631,7 @@ function renderResults(result) {
 
 
 /* =========================================================
-   計算ボタン
+   計算
    ========================================================= */
 
 function calculate() {
@@ -1733,7 +1702,9 @@ document
   });
 
 
-/* 計算ボタン */
+/* =========================================================
+   計算ボタン
+   ========================================================= */
 
 document
   .getElementById("calcBtn")
@@ -1743,7 +1714,9 @@ document
   );
 
 
-/* 初期表示 */
+/* =========================================================
+   初期表示
+   ========================================================= */
 
 renderConditionText();
 
