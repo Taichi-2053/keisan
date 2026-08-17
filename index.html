@@ -669,9 +669,16 @@ min(年末残高, 控除対象借入限度額)
 
 const CONDITIONS = {
 
+  /* =========================
+     条件①
+     ========================= */
+
   1: {
 
     name: "条件①",
+
+    /* 会社補助金：10年間で160万円
+       → 年間16万円 */
 
     companySubsidy: function(year) {
 
@@ -680,6 +687,8 @@ const CONDITIONS = {
         : 0;
 
     },
+
+    /* 利子補給率 */
 
     interestSupportRate: function(year) {
 
@@ -694,23 +703,34 @@ const CONDITIONS = {
       return 0;
 
     },
+
+    /* 利子補給対象上限：1,500万円 */
 
     interestSupportCap: 15000000
 
   },
 
 
+  /* =========================
+     条件②
+     ========================= */
+
   2: {
 
     name: "条件②",
 
+    /* ★ 条件②は10年間で330万円
+       → 年間33万円 */
+
     companySubsidy: function(year) {
 
       return year <= 10
-        ? 160000
+        ? 330000
         : 0;
 
     },
+
+    /* 利子補給率 */
 
     interestSupportRate: function(year) {
 
@@ -725,6 +745,8 @@ const CONDITIONS = {
       return 0;
 
     },
+
+    /* ★ 条件②は3,500万円まで利子補給対象 */
 
     interestSupportCap: 35000000
 
@@ -873,7 +895,6 @@ function simulate(conditionId) {
     year++
   ) {
 
-
     const annualRate =
       year <= 5
         ? firstRate
@@ -918,9 +939,7 @@ function simulate(conditionId) {
 
 
       /*
-       * 月初残高を保存
-       *
-       * 利子補給はこの月の残高を基準にする
+       * 月初残高
        */
 
       const monthStartBalance =
@@ -981,7 +1000,7 @@ function simulate(conditionId) {
 
 
       /*
-       * 年率を月率に変換
+       * 年率 → 月率
        */
 
       const monthlySupport =
@@ -991,7 +1010,7 @@ function simulate(conditionId) {
 
 
       /*
-       * 実際の利息を超えない
+       * 実際に支払った利息を超えない
        */
 
       const actualMonthlySupport =
@@ -1009,14 +1028,18 @@ function simulate(conditionId) {
        * 通常の返済処理
        */
 
-      annualInterest += interest;
+      annualInterest +=
+        interest;
 
-      annualPrincipal += principal;
+      annualPrincipal +=
+        principal;
 
-      annualPayment += payment;
+      annualPayment +=
+        payment;
 
 
-      balance -= principal;
+      balance -=
+        principal;
 
 
       if (balance < 0.01) {
@@ -1108,7 +1131,8 @@ function simulate(conditionId) {
 
       annualPrincipal,
 
-      endingBalance: balance,
+      endingBalance:
+        balance,
 
       companySubsidy,
 
@@ -1120,7 +1144,8 @@ function simulate(conditionId) {
 
       realPayment,
 
-      monthlyLoanPayment: monthly,
+      monthlyLoanPayment:
+        monthly,
 
       monthlyRealPayment:
         realPayment / 12
@@ -1188,6 +1213,10 @@ function renderConditionText() {
     CONDITIONS[selectedCondition];
 
 
+  const subsidyTotal =
+    condition.companySubsidy(1) * 10;
+
+
   document.getElementById(
     "conditionText"
   ).innerHTML = `
@@ -1198,13 +1227,16 @@ function renderConditionText() {
 
     <p>
       会社補助金：
-      1〜10年目は年間16万円
+      1〜10年目は年間
+      ${yen(condition.companySubsidy(1))}
+      （10年間合計 ${yen(subsidyTotal)}）
     </p>
 
     <p>
       利子補給対象：
       その時点のローン残高と
-      ${(condition.interestSupportCap / 10000).toLocaleString("ja-JP")}万円
+      ${(condition.interestSupportCap / 10000)
+        .toLocaleString("ja-JP")}万円
       の小さい方
     </p>
 
